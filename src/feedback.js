@@ -31,7 +31,7 @@ export default class Feedback {
 			backText: 'Back',
 			failedTitle: 'Oops, an error ocurred!',
 			failedMessage: 'Please try again. If this keeps happening, try to send an email instead.',
-			position: 'right',
+			position: 'left',
 			primary: 'rgb(53, 222, 118)',
 			background: '#fff',
 			color: '#000',
@@ -51,14 +51,13 @@ export default class Feedback {
 			}
 		}
 
+		this.root = null;
+		this.currentElement = null;
+
 		// Parse the provided options and merge with defaults
 		this.options = Object.assign({}, defaultOptions, options)
 
 		// Create a new root element for feedback-js to place it's elements in
-		const div = document.createElement('div')
-		div.id = 'feedback-root'
-		document.body.insertBefore(div, document.body.firstChild)
-		this.root = div
 
 		// Add a comment to the dom
 		const comment = document.createComment('feedback-js modal code')
@@ -71,21 +70,41 @@ export default class Feedback {
 	/**
 	 * Render the default button
 	 */
-	renderButton() {
-		if (!this.root) return
-
+	renderButton(element) {
+		let html = '';
 		this.showDefaultBtn = true
 
-		const html = `
+		if (element) {
+			html = `
+			<div class="feedback-btn-wrapper">
+				<button id="feedback-btn" title="Give feedback">
+					<svg class="inline w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+				</button>
+			</div>`;
+		} else {
+			html = `
 			<div class="feedback-btn-wrapper">
 				<button id="feedback-btn" title="Give feedback">
 					<svg class="inline w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
 					<span>${this.options.btnTitle}</span>
 				</button>
-			</div>
-		`
+			</div>`;
+		}
+		const div = document.createElement('div')
+		div.id = 'feedback-root'
 
-		this.root.innerHTML = html
+
+		if (element != null) {
+			this.root = div;
+			this.root.innerHTML = html;
+			element.appendChild(this.root);
+			this.currentElement = element;
+		} else {
+			document.body.insertBefore(div, document.body.firstChild)
+			this.root = div;
+			this.root.innerHTML = html
+		}
+
 
 		const button = document.getElementById('feedback-btn')
 		button.addEventListener('click', () => {
@@ -238,7 +257,7 @@ export default class Feedback {
 		this.root.innerHTML = ''
 
 		if (this.showDefaultBtn) {
-			this.renderButton()
+			this.renderButton(this.currentElement)
 		}
 	}
 
@@ -314,21 +333,8 @@ export default class Feedback {
 	 * Render the success state.
 	 */
 	renderSuccess() {
-		if (!this.root) return
-
-		const html = `
-			<div class="feedback-btn-wrapper">
-				<button id="feedback-btn" title="Give feedback">
-					<span>${this.options.success}</span>
-				</button>
-			</div>
-		`
-
-		this.root.innerHTML = html
-
-		setTimeout(() => {
-			this.renderButton()
-		}, 3000)
+		this.root.innerHTML = ''
+		this.renderButton(this.currentElement)
 	}
 
 	/**
@@ -370,12 +376,12 @@ export default class Feedback {
 			}
 
 			.feedback-wrapper{
-				position: fixed;
+				position: absolute;
 				z-index: 1000;
-				bottom: 0;
-				${this.options.position === 'left' ? 'left: 0' : 'right: 0'};
+				bottom: -30px;
+				${this.options.position === 'left' ? 'left: -52px' : 'right: 0'};
 				margin: 2rem;
-				width: 100%;
+				width: 320px;
 				max-width: 20rem;
 			}
 
@@ -642,11 +648,7 @@ export default class Feedback {
 			}
 
 			.feedback-btn-wrapper{
-				position: fixed;
-				z-index: 1000;
-				bottom: 0;
-				${this.options.position === 'left' ? 'left: 0' : 'right: 0'};
-				margin: 2rem;
+				position: relative;				
 			}
 
 			#feedback-btn{
