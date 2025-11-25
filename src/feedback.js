@@ -16,6 +16,7 @@ export default class Feedback {
 			endpoint: '',
 			events: false,
 			emailField: false,
+			phoneField: false,
 			forceShowButton: false,
 			btnTitle: 'Feedback',
 			title: 'Feedback',
@@ -25,6 +26,7 @@ export default class Feedback {
 			success: 'Thanks! 👊',
 			inputPlaceholder: 'Your feedback goes here!',
 			emailPlaceholder: 'Email address (optional)',
+			phoneNumPlaceholder: 'Phone Number (optional)',
 			submitText: 'Submit',
 			backText: 'Back',
 			failedTitle: 'Oops, an error ocurred!',
@@ -78,7 +80,7 @@ export default class Feedback {
 			<div class="feedback-btn-wrapper">
 				<button id="feedback-btn" title="Give feedback">
 					<svg class="inline w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
-					<span>${ this.options.btnTitle }</span>
+					<span>${this.options.btnTitle}</span>
 				</button>
 			</div>
 		`
@@ -101,13 +103,13 @@ export default class Feedback {
 			<div class="feedback-wrapper">
 				<div class="feedback-main">
 					<div class="feedback-header">
-						<p>${ this.options.title }</p>
-						${ this.options.contactLink.length > 0 ? '<a href=' + this.options.contactLink + '>' + this.options.contactText + '</a>' : '' }
+						<p>${this.options.title}</p>
+						${this.options.contactLink.length > 0 ? '<a href=' + this.options.contactLink + '>' + this.options.contactText + '</a>' : ''}
 					</div>
 					<div class="feedback-content">
-						<p>${ this.options.typeMessage }</p>
+						<p>${this.options.typeMessage}</p>
 						<div class="feedback-content-list">
-							${ Object.entries(this.options.types).reduce((prev, [ id, item ]) => prev += `<button id="feedback-item-${ id }" class="feedback-item"><span>${ item.icon }</span>${ item.text }</button>`, '') }
+							${Object.entries(this.options.types).reduce((prev, [id, item]) => prev += `<button id="feedback-item-${id}" class="feedback-item"><span>${item.icon}</span>${item.text}</button>`, '')}
 						</div>
 					</div>
 				</div>
@@ -127,7 +129,7 @@ export default class Feedback {
 		})
 
 		Object.keys(this.options.types).forEach((id) => {
-			const elem = document.getElementById(`feedback-item-${ id }`)
+			const elem = document.getElementById(`feedback-item-${id}`)
 
 			elem.onclick = () => {
 				this.renderForm(id)
@@ -146,18 +148,22 @@ export default class Feedback {
 
 		const feedbackType = this.options.types[type]
 
+
 		const html = `
 			<div class="feedback-wrapper">
 				<div class="feedback-main">
 					<div class="feedback-header">
-						<p>${ feedbackType.icon } ${ feedbackType.text }</p>
+						<p>${feedbackType.icon} ${feedbackType.text}</p>
 					</div>
 					<div class="feedback-content">
-							${ this.options.emailField ? `<input id="feedback-email" type="email" name="email" placeholder="${ this.options.emailPlaceholder }">` : '' }
-							<textarea id="feedback-message" name="feedback" autofocus type="text" maxlength="500" rows="5" placeholder="${ this.options.inputPlaceholder }"></textarea>
+							${this.options.emailField ? `<input id="feedback-email" type="email" name="email" placeholder="${this.options.emailPlaceholder}">` : ''}
+							${this.options.phoneField ? `<span class="input-label">Please enter mobile number with country code</span>` : ''}
+							${this.options.phoneField ? `<input id="feedback-phoneNum" type="tel" name="phoneNum" inputmode="numeric" pattern="[0-9]{10}" title="Please enter mobile number" placeholder="${this.options.phoneNumPlaceholder}">` : ''}
+							${this.options.phoneField ? `<span class="input-note" id="validateNum"></span>` : ''}
+							<textarea id="feedback-message" name="feedback" autofocus type="text" ) {maxlength="500" rows="5" placeholder="${this.options.inputPlaceholder}"></textarea>
 							<div id="feedback-actions" class="feedback-actions">
-								<button type="button" id="feedback-back">${ this.options.backText }</button>
-								<button type="submit" id="feedback-submit">${ this.options.submitText }</button>
+								<button type="button" id="feedback-back">${this.options.backText}</button>
+								<button type="submit" id="feedback-submit">${this.options.submitText}</button>
 							</div>
 					</div>
 				</div>
@@ -170,9 +176,42 @@ export default class Feedback {
 		`
 
 		this.current = type
-		this.root.innerHTML = html
+		this.root.innerHTML = html;
 
 		document.getElementById('feedback-message').focus()
+
+		if (this.options.phoneField) {
+			const phoneInput = document.getElementById('feedback-phoneNum');
+			const validateNote = document.getElementById('validateNum');
+			const submitBtn = document.getElementById('feedback-submit');
+
+			phoneInput.addEventListener('input', () => {
+				const regex = /^\+\d[\d\s]{5,14}$/;
+
+				if (!regex.test(phoneInput.value)) {
+					validateNote.innerHTML = 'Please enter valid mobile number!';
+					validateNote.classList.add('danger');
+					submitBtn.style.display = 'none'; // disable button
+				} else {
+					validateNote.innerHTML = '';
+					validateNote.classList.remove('danger');
+					submitBtn.style.display = 'block'; // disable button
+				}
+			});
+
+			phoneInput.addEventListener('focusout', () => {
+				const regex = /^\+\d[\d\s]{5,14}$/;
+				if (!regex.test(phoneInput.value)) {
+					validateNote.innerHTML = 'Please enter valid mobile number!';
+					validateNote.classList.add('danger');
+					submitBtn.style.display = 'none'; // disable button
+				} else {
+					validateNote.innerHTML = '';
+					validateNote.classList.remove('danger');
+					submitBtn.style.display = 'block'; // disable button
+				}
+			});
+		}
 
 		const button = document.getElementById('feedback-close')
 		button.addEventListener('click', () => {
@@ -211,10 +250,11 @@ export default class Feedback {
 	submitForm() {
 		const message = document.getElementById('feedback-message').value
 		const email = this.options.emailField ? document.getElementById('feedback-email').value : undefined
-
+		const phoneNum = this.options.phoneField ? document.getElementById('feedback-phoneNum').value : undefined
 		const data = {
 			id: this.options.id,
 			email: email,
+			phone: phoneNum,
 			feedbackType: this.current,
 			url: window.location.href,
 			message: message
@@ -279,7 +319,7 @@ export default class Feedback {
 		const html = `
 			<div class="feedback-btn-wrapper">
 				<button id="feedback-btn" title="Give feedback">
-					<span>${ this.options.success }</span>
+					<span>${this.options.success}</span>
 				</button>
 			</div>
 		`
@@ -301,10 +341,10 @@ export default class Feedback {
 			<div class="feedback-wrapper">
 				<div class="feedback-main">
 					<div class="feedback-header">
-						<p>${ this.options.failedTitle }</p>
+						<p>${this.options.failedTitle}</p>
 					</div>
 					<div class="feedback-content">
-						<p>${ this.options.failedMessage }</p>
+						<p>${this.options.failedMessage}</p>
 					</div>
 				</div>
 				<div class="feedback-close">
@@ -333,15 +373,15 @@ export default class Feedback {
 				position: fixed;
 				z-index: 1000;
 				bottom: 0;
-				${ this.options.position === 'left' ? 'left: 0' : 'right: 0' };
+				${this.options.position === 'left' ? 'left: 0' : 'right: 0'};
 				margin: 2rem;
 				width: 100%;
 				max-width: 20rem;
 			}
 
 			.feedback-main{
-				background-color: ${ this.options.background };
-				color: ${ this.options.color };
+				background-color: ${this.options.background};
+				color: ${this.options.color};
 				border-radius: 0.6rem;
 				text-align: center;
 				overflow: hidden;
@@ -349,8 +389,8 @@ export default class Feedback {
 			}
 
 			.feedback-header{
-				color: ${ this.options.background };
-				background-color: ${ this.options.primary };
+				color: ${this.options.background};
+				background-color: ${this.options.primary};
 				padding: 0.8rem 1.25rem;
 			}
 
@@ -366,8 +406,8 @@ export default class Feedback {
 				font-size: 1rem;
 				margin-top: 0.5rem;
 				display: block;
-				color: ${ this.options.background };
-				border: 2px solid ${ this.options.primary };
+				color: ${this.options.background};
+				border: 2px solid ${this.options.primary};
 				text-decoration: none;
 				padding: 5px 10px
 			}
@@ -377,7 +417,7 @@ export default class Feedback {
 			}
 
 			.feedback-header a:focus{
-				border: 2px solid ${ this.options.background };
+				border: 2px solid ${this.options.background};
 				border-radius: 5px;
 			}
 
@@ -397,7 +437,7 @@ export default class Feedback {
 			}
 
 			.feedback-content input{
-				border: 3px solid ${ this.options.background };
+				border: 3px solid ${this.options.background};
 				filter: brightness(95%);
 				border-radius: 10px;
 				outline: 0;
@@ -411,7 +451,7 @@ export default class Feedback {
 
 			.feedback-content textarea{
 				overflow: auto;
-				border: 3px solid ${ this.options.background };
+				border: 3px solid ${this.options.background};
 				filter: brightness(95%);
 				border-radius: 10px;
 				outline: 0;
@@ -425,7 +465,7 @@ export default class Feedback {
 
 			.feedback-content textarea:focus,
 			.feedback-content input:focus{
-				border: 3px solid ${ this.options.primary };
+				border: 3px solid ${this.options.primary};
 			}
 
 			.feedback-actions{
@@ -448,7 +488,7 @@ export default class Feedback {
 			}
 
 			.feedback-actions button:focus {
-				border: 3px solid ${ this.options.primary };
+				border: 3px solid ${this.options.primary};
 				filter: brightness(105%);
 			}
 			
@@ -457,21 +497,22 @@ export default class Feedback {
 			}
 
 			#feedback-back{
-				background: ${ this.options.background };
+				background: ${this.options.background};
 				color: rgba(58,71,65);
 			}
 
 			#feedback-submit{
+				display: none;
 				margin-left: auto;
-				background: ${ this.options.primary };
-				color: ${ this.options.background };
+				background: ${this.options.primary};
+				color: ${this.options.background};
 				font-weight: 700;
 			}
 
 			#feedback-loading{
 				margin-left: auto;
-				background: ${ this.options.primary };
-				color: ${ this.options.background };
+				background: ${this.options.primary};
+				color: ${this.options.background};
 				font-weight: 700;
 			}
 
@@ -490,10 +531,10 @@ export default class Feedback {
 				width: 20px;
 				height: 20px;
 				margin: 0;
-				border: 3px solid ${ this.options.background };
+				border: 3px solid ${this.options.background};
 				border-radius: 50%;
 				animation: feedback-loader 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-				border-color: ${ this.options.background } transparent transparent transparent;
+				border-color: ${this.options.background} transparent transparent transparent;
 			}
 
 			.feedback-loader div:nth-child(1) {
@@ -538,9 +579,9 @@ export default class Feedback {
 				display: flex;
 				align-items: center;
 				flex-direction: row;
-				color: ${ this.options.color };
-				background-color: ${ this.options.background };
-				border: 2px solid ${ this.options.background };
+				color: ${this.options.color};
+				background-color: ${this.options.background};
+				border: 2px solid ${this.options.background};
 				border-radius: 10px;
 				padding: 10px;
 			}
@@ -550,7 +591,7 @@ export default class Feedback {
 			}
 
 			.feedback-item:focus{
-				border: 2px solid ${ this.options.primary };
+				border: 2px solid ${this.options.primary};
 				border-radius: 5px;
 			}
 
@@ -565,7 +606,7 @@ export default class Feedback {
 				margin-top: .75rem;
 				display: flex;
 				align-items: center;
-				justify-content: ${ this.options.position === 'left' ? 'flex-start' : 'flex-end' };
+				justify-content: ${this.options.position === 'left' ? 'flex-start' : 'flex-end'};
 				flex-direction: row;
 			}
 
@@ -577,13 +618,13 @@ export default class Feedback {
 				outline: 0;
 				border-radius: 9999px;
 				padding: .5rem;
-				background: ${ this.options.background };
-				color: ${ this.options.color };
-				border: 2px solid ${ this.options.background };
+				background: ${this.options.background};
+				color: ${this.options.color};
+				border: 2px solid ${this.options.background};
 			}
 
 			.feedback-close button:focus{
-				border: 2px solid ${ this.options.primary };
+				border: 2px solid ${this.options.primary};
 			}
 
 			.feedback-close button:hover{
@@ -604,7 +645,7 @@ export default class Feedback {
 				position: fixed;
 				z-index: 1000;
 				bottom: 0;
-				${ this.options.position === 'left' ? 'left: 0' : 'right: 0' };
+				${this.options.position === 'left' ? 'left: 0' : 'right: 0'};
 				margin: 2rem;
 			}
 
@@ -619,8 +660,8 @@ export default class Feedback {
 				user-select:none;
 				border:0;
 				outline: 0;
-				color: ${ this.options.background };
-				background-color: ${ this.options.primary };
+				color: ${this.options.background};
+				background-color: ${this.options.primary};
 				transition: filter .4s ease;
 			}
 
@@ -641,6 +682,28 @@ export default class Feedback {
 				font-weight: 700;
 				font-size: 1rem;
 				margin-left: .5rem;
+			}
+
+			.input-note {
+				text-align: left;
+				font-size: 11px;
+				width: 100%;
+				margin-bottom: 14px;
+				margin-left: 14px;
+				margin-top: -3px;
+			}
+
+			.input-label {
+				text-align: left;
+				font-size: 11px;
+				width: 100%;
+				margin-bottom: 5px;
+				margin-left: 5px;
+				margin-top: -3px;
+			}
+
+			.danger {
+				color: red;
 			}
 		`
 
